@@ -1,0 +1,53 @@
+name: Deploy to GitHub pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  repository-projects: write
+
+env:
+  PROJECT_SRC: apps/app.osumt
+  BUILD_FOLDER: apps/app.osumt/.output/public
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          repository: drolx/ying
+          submodules: false
+          persist-credentials: false
+          ssh-key: ${{ secrets.YING_PRIVATE_KEY }}
+
+      - name: setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - run: |
+          bun install
+          cd $PROJECT_SRC
+          bun generate
+
+      - name: Init new repo in $BUILD_FOLDER and commit generated files
+        run: |
+          grep -rnwl "<link rel=\"prefetch\"" $BUILD_FOLDER | xargs sed -i 's$<link rel="prefetch" href="[^"]*\.\(jpg\|png\|webm\|jpeg\|ttg\|svg\|gif\)">$$g'
+          cd $BUILD_FOLDER
+          touch .nojekyll
+          git init
+          git add -A
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m 'deploy'
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ${{env.BUILD_FOLDER}}
