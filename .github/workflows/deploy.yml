@@ -10,8 +10,8 @@ permissions:
   repository-projects: write
 
 env:
-  PROJECT_SRC: apps/app.osumt
-  BUILD_FOLDER: apps/app.osumt/.output/public
+  PROJECT_SRC: sites/site.transport
+  BUILD_FOLDER: sites/site.transport/.output/public
 
 jobs:
   build:
